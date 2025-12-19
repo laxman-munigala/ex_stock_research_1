@@ -1,0 +1,17 @@
+[project]
+name = "ex-stock-research-1"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "google-adk>=1.21.0",
+    "litellm>=1.80.10",
+    "mplfinance>=0.12.10b0",
+    "yfinance>=0.2.66",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.1.0",
+]
