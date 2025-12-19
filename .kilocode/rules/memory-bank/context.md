@@ -7,6 +7,7 @@ Project initialization and Memory Bank setup. The project structure is in place,
 - Project created with `pyproject.toml` and `main.py`.
 - `test_agent_one` created with basic Google ADK agent configuration.
 - Memory Bank structure initialized.
+- Updated `tools/customtool.py` to format large financial metrics in billions/millions.
 
 ## Next Steps
 1.  **Dependency Management**: Add missing dependencies (`yfinance`, `matplotlib`, `pandas`, `requests`) to `pyproject.toml`.
