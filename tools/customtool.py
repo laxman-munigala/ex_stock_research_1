@@ -32,7 +32,22 @@ def get_stock_data(
     
     stock = yf.Ticker(ticker)
     df = stock.history(period=period, interval=interval)
-    
+
+    # Calculate Moving Averages
+    # df['SMA_21'] = df['Close'].rolling(window=21).mean()
+    df['SMA_50'] = df['Close'].rolling(window=50).mean()
+    df['SMA_200'] = df['Close'].rolling(window=200).mean()
+
+    # Calculate RSI (14 periods)
+    delta = df['Close'].diff()
+    gain = (delta.where(delta > 0, 0))
+    loss = (-delta.where(delta < 0, 0))
+    avg_gain = gain.rolling(window=14).mean()
+    avg_loss = loss.rolling(window=14).mean()
+    rs = avg_gain / avg_loss
+    df['RSI'] = 100 - (100 / (1 + rs))
+
+
     return df
 
 
@@ -66,19 +81,6 @@ def generate_stock_chart(df: pd.DataFrame, ticker: str, output_path: str) -> Non
     if not all(col in df.columns for col in required_columns):
         raise ValueError(f"DataFrame must contain the following columns: {required_columns}")
 
-    # Calculate Moving Averages
-    # df['SMA_21'] = df['Close'].rolling(window=21).mean()
-    df['SMA_50'] = df['Close'].rolling(window=50).mean()
-    df['SMA_200'] = df['Close'].rolling(window=200).mean()
-
-    # Calculate RSI (14 periods)
-    delta = df['Close'].diff()
-    gain = (delta.where(delta > 0, 0))
-    loss = (-delta.where(delta < 0, 0))
-    avg_gain = gain.rolling(window=14).mean()
-    avg_loss = loss.rolling(window=14).mean()
-    rs = avg_gain / avg_loss
-    df['RSI'] = 100 - (100 / (1 + rs))
 
     df = df.tail(250)
     # Create addplots
@@ -115,7 +117,7 @@ def generate_stock_chart(df: pd.DataFrame, ticker: str, output_path: str) -> Non
     fig.savefig(output_path)
 
 
-def format_large_number(value):
+def _format_large_number(value):
     """Formats large numbers into billions or millions with a dollar sign."""
     if value is None or value == 'N/A' or not isinstance(value, (int, float)):
         return value
@@ -188,17 +190,17 @@ def get_stock_metrics(ticker: str) -> str:
 
     # Get key metrics from info
     info = stock.info
-    market_cap = format_large_number(info.get('marketCap', 'N/A'))
+    market_cap = _format_large_number(info.get('marketCap', 'N/A'))
     pe_ratio = info.get('trailingPE', 'N/A')
     ps_ratio = info.get('priceToSalesTrailing12Months', 'N/A')
-    total_debt = format_large_number(info.get('totalDebt', 'N/A'))
+    total_debt = _format_large_number(info.get('totalDebt', 'N/A'))
     debt_to_equity = info.get('debtToEquity', 'N/A')
 
     # Extract revenue, net income, and growth from annual income statement
     if last_2_years is not None and not last_2_years.empty:
         if 'Total Revenue' in last_2_years.index:
             revenue_series = last_2_years.loc['Total Revenue']
-            revenue = format_large_number(revenue_series.iloc[0] if len(revenue_series) > 0 else 'N/A')
+            revenue = _format_large_number(revenue_series.iloc[0] if len(revenue_series) > 0 else 'N/A')
             if len(revenue_series) >= 2:
                 rev_curr = revenue_series.iloc[0]
                 rev_prev = revenue_series.iloc[1]
@@ -210,7 +212,7 @@ def get_stock_metrics(ticker: str) -> str:
             growth = 'N/A'
         if 'Net Income' in last_2_years.index:
             net_income_series = last_2_years.loc['Net Income']
-            net_income = format_large_number(net_income_series.iloc[0] if len(net_income_series) > 0 else 'N/A')
+            net_income = _format_large_number(net_income_series.iloc[0] if len(net_income_series) > 0 else 'N/A')
         else:
             net_income = 'N/A'
     else:

@@ -10,10 +10,6 @@ The application uses a multi-agent architecture built on the **Google Agent Deve
 - **Root Agent**: Coordinates the sub-agents or manages the flow of information.
 
 ### 2. Agents
-- **Data Collection Agent**:
-    - **Responsibility**: Fetch raw data and prepare visualizations.
-    - **Tools**: `yfinance` (market data), `matplotlib` (charting).
-    - **Output**: Raw data (JSON/DataFrame) and Chart Image.
 - **Technical Analysis Agent**:
     - **Responsibility**: Analyze price action and indicators.
     - **Input**: Historical price data, calculated indicators (SMA, RSI).
@@ -24,15 +20,19 @@ The application uses a multi-agent architecture built on the **Google Agent Deve
     - **Output**: Fundamental health score, news summary, earnings insights.
 - **Summary & Recommendation Agent**:
     - **Responsibility**: Synthesize all information into a final verdict.
-    - **Input**: Outputs from all other agents.
-    - **Output**: Final text summary and generation of the visual report (using Gemini Image model).
+    - **Input**: Outputs from Technical and Fundamental agents.
+    - **Output**: Final text summary and recommendations.
+- **Visualization Agent**:
+    - **Responsibility**: Generate the final visual report and charts.
+    - **Input**: Summary, recommendations, and raw data.
+    - **Output**: Final visual report (using Gemini Image model or charting tools).
 
 ## Data Flow
 1.  User inputs Ticker.
-2.  **Data Agent** fetches history -> calculates indicators -> draws chart.
-3.  **Technical Agent** reads data/indicators -> generates technical report.
-4.  **Fundamental Agent** searches news/earnings -> generates fundamental report.
-5.  **Summary Agent** combines Chart + Technical Report + Fundamental Report -> Generates Final Visual Output.
+2.  **Technical Agent** fetches data/indicators -> generates technical report.
+3.  **Fundamental Agent** searches news/earnings -> generates fundamental report.
+4.  **Summary Agent** combines Technical Report + Fundamental Report -> Generates final verdict.
+5.  **Visualization Agent** takes all outputs -> Generates Final Visual Output.
 
 ## Directory Structure
 - `main.py`: Entry point.

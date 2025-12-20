@@ -5,10 +5,10 @@ Stock analysis requires synthesizing vast amounts of data from various sources (
 
 ## Solution
 An AI-powered multi-agent application that automates the research process. It takes a stock ticker as input and orchestrates specialized agents to:
-1.  Collect market data and generate charts.
-2.  Perform technical analysis on price trends.
-3.  Conduct fundamental analysis using earnings and news.
-4.  Synthesize findings into a visual summary with actionable recommendations.
+1.  Perform technical analysis on price trends and indicators.
+2.  Conduct fundamental analysis using earnings and news.
+3.  Synthesize findings into actionable recommendations.
+4.  Generate a visual summary and report.
 
 ## User Experience
 - **Interface**: Command-line interface (CLI).

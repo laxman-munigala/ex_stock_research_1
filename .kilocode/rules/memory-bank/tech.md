@@ -8,7 +8,7 @@
 ## Data & Analysis Libraries
 - **`yfinance`**: Stock market data retrieval.
 - **`pandas`**: Data manipulation and analysis.
-- **`matplotlib`** / **`seaborn`**: Static chart generation.
+- **`matplotlib`** / **`seaborn`** / **`mplfinance`**: Chart generation.
 - **`ta`** (Technical Analysis Library) or custom implementation: For calculating indicators like RSI, SMA.
 
 ## External APIs & Tools
@@ -18,6 +18,7 @@
 ## Development Tools
 - **`uv`**: Python package and project manager (implied by `uv.lock`).
 - **VS Code**: IDE.
+- **`litellm`**: For LLM abstraction (dependency).
 
 ## Constraints
 - **Rate Limits**: API rate limits for `yfinance` and Google Search.

@@ -23,12 +23,12 @@ Develop an AI-powered stock analysis application that accepts a stock ticker (e.
 
 The application is built on a Google ADK-based multi-agent framework, where specialized agents handle different aspects of the analysis:
 
-- **Data Collection Agent**: Retrieves data from yfinance, computes indicators, and generates a stock chart image.
-- **Technical Analysis Agent**: Analyzes the chart and indicators to derive technical insights and signals.
+- **Technical Analysis Agent**: Analyzes price action and indicators to derive technical insights and signals.
 - **Fundamental Analysis Agent**: Processes earnings data and searches for company-related information to perform fundamental analysis.
-- **Summary and Recommendation Agent**: Synthesizes inputs from other agents to formulate short-term and long-term predictions, then generates the final visual report using the Google Gemini image model.
+- **Summary and Recommendation Agent**: Synthesizes inputs from other agents to formulate short-term and long-term predictions.
+- **Visualization Agent**: Generates the final visual report and charts using the Google Gemini image model or charting tools.
 
-Data flows from the Data Agent to the analysis agents, with the Summary Agent orchestrating the final output.
+Data flows from the analysis agents to the Summary Agent, with the Visualization Agent producing the final output.
 
 ## Technologies
 
