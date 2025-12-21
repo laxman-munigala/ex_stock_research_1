@@ -5,8 +5,8 @@ import mplfinance as mpf
 
 def get_stock_data(
     ticker: str, 
-    number_of_days: int, 
-    timeframe_unit: Literal["day", "hour", "15min"]
+    number_of_days: int=500, 
+    timeframe_unit: Literal["day", "hour", "15min"] = "day"
 ) -> pd.DataFrame:
     """
     Retrieves historical stock data for a given ticker using yfinance.
@@ -20,6 +20,8 @@ def get_stock_data(
         A pandas DataFrame containing the historical stock data with columns:
         Open, High, Low, Close, Volume, etc.
     """
+
+    print(f"Fetching {number_of_days} days of {timeframe_unit} data for {ticker}...")
     # Map timeframe_unit to yfinance interval strings
     interval_map = {
         "day": "1d",

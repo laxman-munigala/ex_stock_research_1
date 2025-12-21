@@ -1,6 +1,50 @@
-def main():
-    print("Hello from ex-stock-research-1!")
+import asyncio
+from google.adk.runners import InMemoryRunner
+from google.genai import types
+from stock_analysis_agent.agent import root_agent
+import logging
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+)
+
+async def main():
+    # Use InMemoryRunner which uses in-memory session and artifact services
+    # Using async context manager for automatic cleanup (calls runner.close())
+    async with InMemoryRunner(agent=root_agent) as runner:
+        user_id = "user_123"
+        session_id = "session_456"
+        
+        # Create a session
+        await runner.session_service.create_session(
+            app_name=runner.app_name,
+            user_id=user_id,
+            session_id=session_id
+        )
+        
+        print(f"Starting session {session_id} for user {user_id}...")
+        
+        # Call the agent
+        new_message = types.Content(parts=[types.Part(text="NVDA")])
+        
+        async for event in runner.run_async(
+            user_id=user_id,
+            session_id=session_id,
+            new_message=new_message
+        ):
+            if event.content and event.content.parts:
+                for part in event.content.parts:
+                    if part.text:
+                        print(f"Agent: {part.text}")
+
+        # Cleanup the session explicitly before exiting the context
+        print(f"Cleaning up session {session_id}...")
+        await runner.session_service.delete_session(
+            app_name=runner.app_name,
+            user_id=user_id,
+            session_id=session_id
+        )
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
