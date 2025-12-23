@@ -20,7 +20,7 @@ async def main():
         initial_state = {
             "technical_report": None,
             "fundamental_report": None,
-            "ticker": "AAPL"
+            "ticker": "SOFI"
         }
 
 

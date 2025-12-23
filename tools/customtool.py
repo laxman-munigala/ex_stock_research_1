@@ -2,6 +2,15 @@ import yfinance as yf
 import pandas as pd
 from typing import Literal
 import mplfinance as mpf
+from google.adk.tools import ToolContext
+import io
+from google.genai import types
+import PIL.Image
+from google.adk.agents.callback_context import CallbackContext
+from google.adk.models import LlmResponse, LlmRequest
+from typing import Optional
+from google.genai.types import Part
+from pathlib import Path
 
 def get_stock_data(
     ticker: str, 
@@ -52,6 +61,92 @@ def get_stock_data(
 
     return df
 
+async def ta_bac(callback_context: CallbackContext) -> Optional[LlmResponse]:
+
+    return None
+
+async def ta_bmc(callback_context: CallbackContext, llm_request: LlmRequest) -> Optional[LlmResponse]:
+
+    ticker = callback_context.state.get('ticker')
+
+    if("saved_chart" in callback_context.state):
+        artifact = await callback_context.load_artifact(f"{ticker}_chart.png")
+        llm_request.contents[0].parts = llm_request.contents[0].parts + [artifact]
+
+    # print(f""" Before Model callback 
+    #         context {callback_context}
+    #         request {llm_request} """)
+
+
+    return None
+
+
+async def get_stock_chart(ticker: str, tool_context: ToolContext) -> str:
+    """
+    Get a stock price chart for a given ticker and saves it as an artifact.
+    Args:
+        ticker: The stock ticker symbol (e.g., 'AAPL').
+    """
+
+
+    artifact_name = f"{ticker}_chart.png"
+    image_path = f"outputs/{ticker}_chart.png"
+
+    df = get_stock_data(ticker)
+    required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+    if not all(col in df.columns for col in required_columns):
+        raise ValueError(f"DataFrame must contain the following columns: {required_columns}")
+
+
+    df = df.tail(50)
+    # Create addplots
+    apds = [
+        # mpf.make_addplot(df['SMA_21'], color='blue', width=1.0),
+        mpf.make_addplot(df['SMA_50'], color='orange', label='SMA_50',width=1.0),
+        mpf.make_addplot(df['SMA_200'], color='red', label='SMA_200', width=1.0),
+        mpf.make_addplot(df['RSI'], panel=2, color='purple', ylabel='RSI', width=1.0)
+    ]
+
+    # Generate the candlestick chart with volume and indicators
+    fig, axes = mpf.plot(
+        df,
+        type='candle',
+        style='charles',
+        volume=True,
+        addplot=apds,
+        title=f'{ticker} Stock Chart',
+        returnfig=True,
+        figsize=(12,6),
+        panel_ratios=(6, 2, 2)
+    )
+    
+    # Add legends
+    # axes[0] is the main chart primary axis
+    axes[0].legend()
+    
+    # axes[4] is the RSI chart primary axis (Panel 2)
+    # Structure is [Main Pri, Main Sec, Vol Pri, Vol Sec, RSI Pri, RSI Sec]
+    if len(axes) > 4:
+        axes[4].legend(['RSI'], loc='upper left')
+
+    fig.savefig(image_path) ## for debugging
+
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format='png', dpi=100) 
+    image_bytes = buffer.getvalue()
+    
+    image_part = types.Part.from_bytes(data=image_bytes, mime_type='image/png')
+
+    # Save as an artifact so the Agent can "see" it
+    print(f'saving artifact {artifact_name}')
+    await tool_context.save_artifact(artifact_name, image_part)
+    print(f'saving artifact DONE {artifact_name} {await tool_context.list_artifacts()}')
+
+    tool_context.state["saved_chart"]=True
+
+    return f"Successfully generated chart for {ticker} and saved as artifactid {artifact_name}. Please analyze the visual trends in this artifactid {artifact_name}."
+
+
 
 def generate_stock_chart(df: pd.DataFrame, ticker: str, output_path: str) -> None:
     """
@@ -84,13 +179,13 @@ def generate_stock_chart(df: pd.DataFrame, ticker: str, output_path: str) -> Non
         raise ValueError(f"DataFrame must contain the following columns: {required_columns}")
 
 
-    df = df.tail(250)
+    df = df.tail(50)
     # Create addplots
     apds = [
         # mpf.make_addplot(df['SMA_21'], color='blue', width=1.0),
         mpf.make_addplot(df['SMA_50'], color='orange', label='SMA_50',width=1.0),
         mpf.make_addplot(df['SMA_200'], color='red', label='SMA_200', width=1.0),
-        mpf.make_addplot(df['RSI'], panel=2, color='purple', ylabel='RSI', width=1.0)
+        # mpf.make_addplot(df['RSI'], panel=2, color='purple', ylabel='RSI', width=1.0)
     ]
 
     # Generate the candlestick chart with volume and indicators
@@ -98,12 +193,12 @@ def generate_stock_chart(df: pd.DataFrame, ticker: str, output_path: str) -> Non
         df,
         type='candle',
         style='charles',
-        volume=True,
+        # volume=True,
         addplot=apds,
         title=f'{ticker} Stock Chart',
         returnfig=True,
         figsize=(12,6),
-        panel_ratios=(6, 2, 2)
+        # panel_ratios=(6, 2, 2)
     )
     
     # Add legends
@@ -112,8 +207,8 @@ def generate_stock_chart(df: pd.DataFrame, ticker: str, output_path: str) -> Non
     
     # axes[4] is the RSI chart primary axis (Panel 2)
     # Structure is [Main Pri, Main Sec, Vol Pri, Vol Sec, RSI Pri, RSI Sec]
-    if len(axes) > 4:
-        axes[4].legend(['RSI'], loc='upper left')
+    # if len(axes) > 4:
+    #     axes[4].legend(['RSI'], loc='upper left')
 
     # Save the chart
     fig.savefig(output_path)
