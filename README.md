@@ -52,11 +52,7 @@ A comprehensive multi-agent AI system that performs deep research on stock ticke
     ```bash
     uv sync
     ```
-    Or using `pip`:
-    ```bash
-    pip install .
-    ```
-
+    
 3.  **Configure Environment Variables**
     Create a `.env` file in the root directory (or rename `tmp.env` if available) and add your API keys:
 
