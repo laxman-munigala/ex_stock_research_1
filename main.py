@@ -1,4 +1,4 @@
-import asyncio
+import asyncio, datetime
 from google.adk.runners import InMemoryRunner
 from google.genai import types
 from stock_analysis_agent.agent import root_agent
@@ -68,6 +68,7 @@ async def main():
             session_id=session_id
         )
         with open(f"outputs/{ticker}_output.md", "w") as f:
+            f.write(f"# Analysis of {ticker} done at {datetime.datetime.now().strftime('%m/%d/%Y, %H:%M')}")
             f.write(f"# Stock chart of {ticker} used for Technical Analysis\n\n")
             f.write(f"![{ticker} chart](./{ticker}_chart.png)")
 
