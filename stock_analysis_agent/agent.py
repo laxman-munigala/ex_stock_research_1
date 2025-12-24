@@ -34,7 +34,7 @@ fundamental_agent = Agent(
 
 # Summary and Recommendation Agent
 summary_agent = Agent(
-    model='gemini-2.5-flash-lite', #'gemini-3-flash-preview'
+    model='gemini-3-flash-preview', #'gemini-3-flash-preview'
     **SUMMARY_AGENT_CONFIG
 )
 
