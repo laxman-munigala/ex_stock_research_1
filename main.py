@@ -14,7 +14,7 @@ async def main():
         user_id = f"user_123_{random.random()}_{random.random()}"
         session_id = f"session_456_{random.random()}_{random.random()}"
 
-        ticker = "PLTR"
+        ticker = "NBIS"
 
         initial_state = {
             "technical_report": None,

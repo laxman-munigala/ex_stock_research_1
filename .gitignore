@@ -13,5 +13,5 @@ wheels/
 **/.adk
 __adk*
 
-outputs/
+# outputs/
 scratch*
