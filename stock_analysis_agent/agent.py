@@ -6,29 +6,6 @@ from tools.customtool import get_stock_data, get_stock_metrics, get_stock_chart,
 import os
 from google.adk.models.lite_llm import LiteLlm  # For multi-model support
 
-# Ensure output directory exists
-# os.makedirs('output', exist_ok=True)
-
-# Technical Analysis Agent
-# technical_agent = Agent(
-#     model='gemini-2.5-flash-lite', #'gemini-3-flash-preview'
-#     tools=[get_stock_metrics],
-#     name='technical_analysis_agent',
-#     description='Analyzes stock price action and technical indicators using metrics and chart.',
-#     instruction="""
-#     You are a Technical Analysis Expert. 
-#     Your goal is to analyze the metrics for the stock ticker. {ticker}
-#     Provide a clear technical signal (Bullish, Bearish, or Neutral) and a brief explanation of your findings.
-#     """,
-#     output_key='technical_report'
-# )
-
-    # You are a technical financial analyst, expert at reading stock charts. 
-    # use the get_stock_chart tool first with ticker {ticker} to generate stock chart and store in artifacts
-    # Look at the given stock chart `{ticker}_chart.png` in artifacts and then provide the technical analysis. 
-    # Provided analysis based on the given chart `{ticker}_chart.png` from artifacts only, do not use any history or old information.
-
-
 technical_agent = Agent(
     model='gemini-3-flash-preview',
     tools=[get_stock_chart], 
@@ -44,9 +21,10 @@ technical_agent = Agent(
 
 # Fundamental Analysis Agent
 fundamental_agent = Agent(
-    # model='gemini-2.5-flash-lite', #'gemini-3-flash-preview'
-    model=LiteLlm(model="perplexity/sonar-pro"),
-    # tools=[google_search],
+    model=LiteLlm(model="perplexity/sonar-pro",stream=True,
+    web_search_options={
+        "search_type": "pro"
+    }),
     name='fundamental_analysis_agent',
     description='You are a financial research assistant.',
     instruction="""
@@ -90,11 +68,14 @@ summary_agent = Agent(
     You are a Senior Investment Strategist.
     Your goal is to synthesize the reports from the Technical Analysis Agent and the Fundamental Analysis Agent.
     1. Review both reports carefully .
-    **Technical Report**
-    {technical_report}
 
-    **Fundamental Report**
+    <technical_report>
+    {technical_report}
+    </technical_report>
+
+    <fundamental_report>
     {fundamental_report}
+    </fundamental_report>
 
     2. Provide a final investment recommendation (Buy, Sell, or Hold).
     3. Include short-term and long-term predictions with clear reasoning.
@@ -104,16 +85,18 @@ summary_agent = Agent(
 
 # Visualization Agent
 visualization_agent = Agent(
-    model='gemini-2.5-flash-lite', #'gemini-3-flash-preview'
-    tools=[get_stock_data],
+    model='gemini-2.5-flash-image', #'gemini-3-pro-image-preview'
     name='visualization_agent',
     description='Generates visual reports and charts for the stock analysis.',
     instruction="""
-    You are a Data Visualization Expert.
-    Your goal is to create a visual summary of the stock analysis.
-    1. Use `get_stock_data` to fetch the necessary data for charting.
-    2. Use `generate_stock_chart` to create a candlestick chart with indicators and save it to 'output/stock_chart.png'.
-    3. Summarize the key points from the final recommendation (found in 'summary_report' in the context) into a concise format that could be used for a visual report.
+    Your goal is to create a visual summary/image of the stock analysis.Do not show stock charts,bars.
+    Use the below summary and recomendation and create an image to depict this. 
+    <summary_report>
+    {summary_report}
+    </summary_report>
+
+        Create a visual with key metrics which is visually appealing, highlight recomendation key points for short terma and long term
+
     """,
     output_key='visualization_report'
 )
@@ -121,14 +104,14 @@ visualization_agent = Agent(
 # Define the workflow using Parallel and Sequential agents
 # 1. Run Technical and Fundamental analysis in parallel
 analysis_parallel_agent = ParallelAgent(
-    sub_agents=[technical_agent],
+    sub_agents=[technical_agent,fundamental_agent],
     name='analysis_parallel_agent',
     description='Runs technical and fundamental analysis in parallel.'
 )
 
 # 2. Sequential workflow: Analysis -> Summary -> Visualization
 stock_research_workflow = SequentialAgent(
-    sub_agents=[analysis_parallel_agent, summary_agent],
+    sub_agents=[analysis_parallel_agent, summary_agent,visualization_agent],
     name='stock_research_workflow',
     description='Sequential workflow for stock research: Analysis, Summary, and Visualization.'
 )
@@ -159,4 +142,5 @@ async def run_analysis(ticker: str):
 
 # Root Agent for ADK orchestration (if needed by main.py)
 # root_agent = stock_research_workflow
-root_agent = technical_agent
+# root_agent = fundamental_agent 
+root_agent = stock_research_workflow

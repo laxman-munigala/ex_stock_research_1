@@ -30,7 +30,7 @@ def get_stock_data(
         Open, High, Low, Close, Volume, etc.
     """
 
-    print(f"Fetching {number_of_days} days of {timeframe_unit} data for {ticker}...")
+    # print(f"Fetching {number_of_days} days of {timeframe_unit} data for {ticker}...")
     # Map timeframe_unit to yfinance interval strings
     interval_map = {
         "day": "1d",
@@ -98,7 +98,7 @@ async def get_stock_chart(ticker: str, tool_context: ToolContext) -> str:
         raise ValueError(f"DataFrame must contain the following columns: {required_columns}")
 
 
-    df = df.tail(50)
+    df = df.tail(200)
     # Create addplots
     apds = [
         # mpf.make_addplot(df['SMA_21'], color='blue', width=1.0),
@@ -138,9 +138,9 @@ async def get_stock_chart(ticker: str, tool_context: ToolContext) -> str:
     image_part = types.Part.from_bytes(data=image_bytes, mime_type='image/png')
 
     # Save as an artifact so the Agent can "see" it
-    print(f'saving artifact {artifact_name}')
+    # print(f'saving artifact {artifact_name}')
     await tool_context.save_artifact(artifact_name, image_part)
-    print(f'saving artifact DONE {artifact_name} {await tool_context.list_artifacts()}')
+    # print(f'saving artifact DONE {artifact_name} {await tool_context.list_artifacts()}')
 
     tool_context.state["saved_chart"]=True
 

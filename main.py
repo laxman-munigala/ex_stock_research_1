@@ -16,11 +16,11 @@ async def main():
         user_id = f"user_123_{random.random()}_{random.random()}"
         session_id = f"session_456_{random.random()}_{random.random()}"
 
-
+        ticker = "NBIS"
         initial_state = {
             "technical_report": None,
             "fundamental_report": None,
-            "ticker": "SOFI"
+            "ticker": ticker
         }
 
 
@@ -37,6 +37,14 @@ async def main():
         # Call the agent
         new_message = types.Content(parts=[types.Part(text="Start the analysis")])
         
+        outputs = {
+            "technical_analysis_agent":[],
+            "fundamental_analysis_agent":[],
+            "summary_recommendation_agent":[],
+            "visualization_agent":[]
+        }
+
+        # with open(f"outputs/{ticker}_output.md", "a") as f:
         async for event in runner.run_async(
             user_id=user_id,
             session_id=session_id,
@@ -45,7 +53,12 @@ async def main():
             if event.content and event.content.parts:
                 for part in event.content.parts:
                     if part.text:
-                        print(f"---- ---- Agent: {event.author} :: {part.text}")
+                        # f.write(f"# {event.author}\n\n")
+                        # f.write(f"{part.text}\n\n")
+                        outputs[event.author].append(part.text)
+                    if part.inline_data and part.inline_data.mime_type == 'image/png':
+                        # f.write(f"# {event.author}\n\n")
+                        part.as_image().save(f"outputs/{ticker}_output.png")
 
         # Cleanup the session explicitly before exiting the context
         print(f"Cleaning up session {session_id}...")
@@ -54,6 +67,15 @@ async def main():
             user_id=user_id,
             session_id=session_id
         )
+        with open(f"outputs/{ticker}_output.md", "w") as f:
+            f.write(f"# Stock chart of {ticker} used for Technical Analysis\n\n")
+            f.write(f"![{ticker} chart](./{ticker}_chart.png)")
+
+            for key in outputs.keys():
+                f.write(f"\n\n# {key}\n\n")
+                for item in outputs[key]: 
+                    f.write(f"{item}\n\n")
+            f.write(f"![{ticker} Recomendation](./{ticker}_output.png)")
 
 if __name__ == "__main__":
     asyncio.run(main())
