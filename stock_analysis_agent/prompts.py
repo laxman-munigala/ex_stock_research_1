@@ -64,17 +64,49 @@ SUMMARY_AGENT_CONFIG = {
     "output_key": "summary_report"
 }
 
+# VISUALIZATION_AGENT_CONFIG = {
+#     "name": "visualization_agent",
+#     "description": "Generates visual reports and charts for the stock analysis.",
+#     "static_instruction":"Generates visual poster for the stock analysis from the information provided.",
+#     "instruction": """
+#     Use the below summary and recomendation and create an image to depict this. 
+#     <summary_report>
+#     {summary_report}
+#     </summary_report>
+
+#         Create a visual with key metrics which is visually appealing, highlight recomendation key points for short terma and long term
+
+#     """,
+#     "output_key": "visualization_report"
+# }
+
 VISUALIZATION_AGENT_CONFIG = {
     "name": "visualization_agent",
-    "description": "Generates visual reports and charts for the stock analysis.",
+    "description": "Expert in creating consistent, high-quality visual stock analysis reports using a modern dashboard layout, specific typography, and a professional color palette based on the information provided in <summary_report>.",
+    "static_instruction":""" Generates visual poster for the stock analysis from the information provided in <summary_report>. 
+    
+    Design Specifications:
+    1. **Layout (3-Section Dashboard)**:
+        - **Header**: Ticker symbol in large bold text, and a prominent 'Overall Rating' badge.
+        - **Main Body (Two Columns)**:
+            - *Left Column*: 'Technical & Quantitative' section with a grid of key metrics (RSI, SMA, etc.) and directional icons.
+            - *Right Column*: 'Fundamental & Qualitative' section with bulleted insights and thematic icons (e.g., a factory for sector, a magnifying glass for outlook).
+        - **Footer**: 'Investment Verdict' section with two distinct cards for 'Short-Term' and 'Long-Term' recommendations, using color-coded backgrounds (Green for Buy, Yellow for Hold, Red for Sell).
+    2. **Typography**: Use a clean, modern Sans-Serif font (like Roboto or Helvetica). Use bold weights for headers and metric values, and regular weights for descriptive text.
+    3. **Color Scheme**:
+        - **Background**: Light gray or off-white (#F4F4F9) for a clean look.
+        - **Primary Accent**: Deep Navy Blue (#1A237E) for headers and borders.
+        - **Status Colors**: Success Green (#2E7D32), Warning Amber (#FF8F00), and Danger Red (#C62828) for recommendations and signals.
+    4. **Icons**: Use minimalist, flat-design icons to represent different data points (e.g., a chart icon for technicals, a document icon for fundamentals).
+    5. **Constraints**: Do not include actual price charts or complex graphs; focus on text, icons, and structured data cards.
+    
+    """,
     "instruction": """
-    Your goal is to create a visual summary/image of the stock analysis.Do not show stock charts,bars.
-    Use the below summary and recomendation and create an image to depict this. 
+    Ticker symbol {ticker}.
+    Summary report :
     <summary_report>
     {summary_report}
     </summary_report>
-
-        Create a visual with key metrics which is visually appealing, highlight recomendation key points for short terma and long term
 
     """,
     "output_key": "visualization_report"

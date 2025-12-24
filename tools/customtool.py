@@ -3,7 +3,7 @@ import pandas as pd
 from typing import Literal
 import mplfinance as mpf
 from google.adk.tools import ToolContext
-import io
+import io,os,datetime
 from google.genai import types
 import PIL.Image
 from google.adk.agents.callback_context import CallbackContext
@@ -67,19 +67,23 @@ async def ta_bac(callback_context: CallbackContext) -> Optional[LlmResponse]:
 
 async def ta_bmc(callback_context: CallbackContext, llm_request: LlmRequest) -> Optional[LlmResponse]:
 
-    ticker = callback_context.state.get('ticker')
-
     if("saved_chart" in callback_context.state):
-        artifact = await callback_context.load_artifact(f"{ticker}_chart.png")
+        artifact = await callback_context.load_artifact(f"{callback_context.state['saved_chart']}")
         llm_request.contents[0].parts = llm_request.contents[0].parts + [artifact]
 
     # print(f""" Before Model callback 
     #         context {callback_context}
     #         request {llm_request} """)
 
-
     return None
 
+async def va_bmc(callback_context: CallbackContext, llm_request: LlmRequest) -> Optional[LlmResponse]:
+
+    # print(f""" Before Model callback 
+    #         context {callback_context}
+    #         request {llm_request} """)
+
+    return None
 
 async def get_stock_chart(ticker: str, tool_context: ToolContext) -> str:
     """
@@ -88,52 +92,58 @@ async def get_stock_chart(ticker: str, tool_context: ToolContext) -> str:
         ticker: The stock ticker symbol (e.g., 'AAPL').
     """
 
+    artifact_name = f"{ticker}_chart_{tool_context.state['reqdt']}.png"
+    image_path = f"outputs/{artifact_name}"
 
-    artifact_name = f"{ticker}_chart.png"
-    image_path = f"outputs/{ticker}_chart.png"
+    #if image_path exists read its bytes
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as image_file:
+            image_bytes = image_file.read()
+        print(f'Got existing {image_path}')
+    else :
+        print(f'Generetaing {image_path}')
+        df = get_stock_data(ticker)
+        required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+        if not all(col in df.columns for col in required_columns):
+            raise ValueError(f"DataFrame must contain the following columns: {required_columns}")
 
-    df = get_stock_data(ticker)
-    required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
-    if not all(col in df.columns for col in required_columns):
-        raise ValueError(f"DataFrame must contain the following columns: {required_columns}")
 
+        df = df.tail(200)
+        # Create addplots
+        apds = [
+            # mpf.make_addplot(df['SMA_21'], color='blue', width=1.0),
+            mpf.make_addplot(df['SMA_50'], color='orange', label='SMA_50',width=1.0),
+            mpf.make_addplot(df['SMA_200'], color='red', label='SMA_200', width=1.0),
+            mpf.make_addplot(df['RSI'], panel=2, color='purple', ylabel='RSI', width=1.0)
+        ]
 
-    df = df.tail(200)
-    # Create addplots
-    apds = [
-        # mpf.make_addplot(df['SMA_21'], color='blue', width=1.0),
-        mpf.make_addplot(df['SMA_50'], color='orange', label='SMA_50',width=1.0),
-        mpf.make_addplot(df['SMA_200'], color='red', label='SMA_200', width=1.0),
-        mpf.make_addplot(df['RSI'], panel=2, color='purple', ylabel='RSI', width=1.0)
-    ]
+        # Generate the candlestick chart with volume and indicators
+        fig, axes = mpf.plot(
+            df,
+            type='candle',
+            style='charles',
+            volume=True,
+            addplot=apds,
+            title=f'{ticker} Stock Chart',
+            returnfig=True,
+            figsize=(12,6),
+            panel_ratios=(6, 2, 2)
+        )
+        
+        # Add legends
+        # axes[0] is the main chart primary axis
+        axes[0].legend()
+        
+        # axes[4] is the RSI chart primary axis (Panel 2)
+        # Structure is [Main Pri, Main Sec, Vol Pri, Vol Sec, RSI Pri, RSI Sec]
+        if len(axes) > 4:
+            axes[4].legend(['RSI'], loc='upper left')
 
-    # Generate the candlestick chart with volume and indicators
-    fig, axes = mpf.plot(
-        df,
-        type='candle',
-        style='charles',
-        volume=True,
-        addplot=apds,
-        title=f'{ticker} Stock Chart',
-        returnfig=True,
-        figsize=(12,6),
-        panel_ratios=(6, 2, 2)
-    )
-    
-    # Add legends
-    # axes[0] is the main chart primary axis
-    axes[0].legend()
-    
-    # axes[4] is the RSI chart primary axis (Panel 2)
-    # Structure is [Main Pri, Main Sec, Vol Pri, Vol Sec, RSI Pri, RSI Sec]
-    if len(axes) > 4:
-        axes[4].legend(['RSI'], loc='upper left')
+        fig.savefig(image_path) ## for debugging
 
-    fig.savefig(image_path) ## for debugging
-
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format='png', dpi=100) 
-    image_bytes = buffer.getvalue()
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', dpi=100) 
+        image_bytes = buffer.getvalue()
     
     image_part = types.Part.from_bytes(data=image_bytes, mime_type='image/png')
 
@@ -142,7 +152,7 @@ async def get_stock_chart(ticker: str, tool_context: ToolContext) -> str:
     await tool_context.save_artifact(artifact_name, image_part)
     # print(f'saving artifact DONE {artifact_name} {await tool_context.list_artifacts()}')
 
-    tool_context.state["saved_chart"]=True
+    tool_context.state["saved_chart"]=artifact_name
 
     return f"Successfully generated chart for {ticker} and saved as artifactid {artifact_name}. Please analyze the visual trends in this artifactid {artifact_name}."
 
@@ -228,7 +238,7 @@ def _format_large_number(value):
         return f"${value:,.2f}"
 
 
-def get_stock_metrics(ticker: str) -> str:
+def get_stock_metrics(ticker: str, tool_context: ToolContext) -> str:
     """
     Retrieves and summarizes key financial metrics for a given stock ticker using yfinance.
 
@@ -244,6 +254,14 @@ def get_stock_metrics(ticker: str) -> str:
         growth, CAGR for revenue and net income, P/E ratio, P/S ratio, market cap, debt,
         debt-to-equity ratio, and earnings data.
     """
+
+    metrics_path = f"outputs/{ticker}_metrics_{tool_context.state['reqdt']}.txt"
+    #if metrics_path exists return its content
+    if os.path.exists(metrics_path):
+        with open(metrics_path, 'r') as f:
+            return f.read()
+
+    print(f"Generating {ticker} metrics")
     stock = yf.Ticker(ticker)
 
     # Get quarterly income statement for the last 4 quarters
@@ -319,20 +337,26 @@ def get_stock_metrics(ticker: str) -> str:
 
     # Format the summary string
     summary = f"""
-Stock Metrics for {ticker.upper()}:
+        Stock Metrics for {ticker.upper()}:
 
-Market Cap: {market_cap}
-P/E Ratio: {pe_ratio}
-P/S Ratio: {ps_ratio}
-Total Debt: {total_debt}
-Debt to Equity: {debt_to_equity}
-Latest Annual Revenue: {revenue}
-Latest Annual Net Income: {net_income}
-Revenue Growth (YoY): {growth}
-Revenue CAGR (4 Quarters): {cagr_rev_str}
-Net Income CAGR (4 Quarters): {cagr_inc_str}
+        Market Cap: {market_cap}
+        P/E Ratio: {pe_ratio}
+        P/S Ratio: {ps_ratio}
+        Total Debt: {total_debt}
+        Debt to Equity: {debt_to_equity}
+        Latest Annual Revenue: {revenue}
+        Latest Annual Net Income: {net_income}
+        Revenue Growth (YoY): {growth}
+        Revenue CAGR (4 Quarters): {cagr_rev_str}
+        Net Income CAGR (4 Quarters): {cagr_inc_str}
+        """
 
-"""
+    #write summary to a file
+    with open(metrics_path, "w") as f:
+        f.write(summary)
+
+
+
 # Quarterly Earnings (Last 4 Quarters):
 # {last_4_quarters.to_string(index=True) if last_4_quarters is not None else 'N/A'}
 
