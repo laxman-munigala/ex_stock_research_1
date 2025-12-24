@@ -1,5 +1,8 @@
 # AI Stock Research Agent
 
+> [!WARNING]
+> **This is a learning project and NOT investment advice.**
+
 A comprehensive multi-agent AI system that performs deep research on stock tickers. By orchestrating specialized agents for technical analysis, fundamental research, and data visualization, this tool generates detailed reports and visual summaries to aid investment decisions.
 
 ## 🚀 Features
