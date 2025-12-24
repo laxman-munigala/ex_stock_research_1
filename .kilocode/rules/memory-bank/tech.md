@@ -4,7 +4,7 @@
 - **Language**: Python 3.12+
 - **AI Framework**: Google ADK (Agent Development Kit) `google-adk>=1.21.0`
 - **LLM**: 
-    - Google Gemini (`gemini-3-flash-preview`, `gemini-2.5-flash-lite`, `gemini-2.5-flash-image`)
+    - Google Gemini (`gemini-3-flash-preview`, `gemini-2.5-flash-lite`, `gemini-3-pro-image-preview`)
     - Perplexity (`perplexity/sonar-pro`) via `litellm`
 
 ## Data & Analysis Libraries

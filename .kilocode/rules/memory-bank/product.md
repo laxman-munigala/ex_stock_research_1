@@ -14,7 +14,9 @@ An AI-powered multi-agent application that automates the research process. It ta
 - **Interface**: Command-line interface (CLI).
 - **Input**: User provides a stock ticker symbol (e.g., "GOOGL").
 - **Process**: The system displays progress as agents work (fetching data, analyzing, summarizing).
-- **Output**: A generated image file containing a visual report with key insights, charts, and investment recommendations.
+- **Output**: 
+    - A generated image file containing a visual report with key insights, charts, and investment recommendations.
+    - A consolidated Markdown report containing the detailed analysis from all agents.
 
 ## Goals
 - **Actionable Insights**: Provide clear buy/sell/hold signals with reasoning.
